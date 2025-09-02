@@ -1,4 +1,3 @@
-// Thin controller: validates shape only, defers business logic to service
 const authService = require('../services/authService');
 
 exports.register = async (req, res) => {

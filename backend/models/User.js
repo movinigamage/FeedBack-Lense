@@ -5,14 +5,14 @@ const bcrypt = require('bcrypt');
 const userSchema = new mongoose.Schema({
   name: { type: String, trim: true, required: true },
   email: { type: String, trim: true, lowercase: true, unique: true, required: true },
-  password: { type: String, required: true, minlength: 6, select: false } // `select: false` hides password by default
+  password: { type: String, required: true, minlength: 6, select: false } 
 }, { timestamps: true });
 
 // Before saving, hash the password if it’s new or changed
 userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next(); // Skip if unchanged
+  if (!this.isModified('password')) return next(); 
   const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt); // Replace plain with hashed
+  this.password = await bcrypt.hash(this.password, salt); 
   next();
 });
 
