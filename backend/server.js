@@ -98,18 +98,23 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-const port = process.env.PORT || 4000;
-app.listen(port, () => {
-  console.log(`FeedbackLens API running on http://localhost:${port}`);
-  console.log(`API Documentation: http://localhost:${port}/api/v1`);
-  console.log(`Health Check: http://localhost:${port}/api/v1/health`);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received. Shutting down gracefully...');
-  mongoose.connection.close(() => {
-    console.log('MongoDB connection closed.');
-    process.exit(0);
+if (require.main === module) {
+  const port = process.env.PORT || 4000;
+  app.listen(port, () => {
+    console.log(`FeedbackLens API running on http://localhost:${port}`);
+    console.log(`API Documentation: http://localhost:${port}/api/v1`);
+    console.log(`Health Check: http://localhost:${port}/api/v1/health`);
   });
-});
+
+  // Graceful shutdown
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM received. Shutting down gracefully...');
+    mongoose.connection.close(() => {
+      console.log('MongoDB connection closed.');
+      process.exit(0);
+    });
+  });
+}
+
+// Export app for testing
+module.exports = app;
