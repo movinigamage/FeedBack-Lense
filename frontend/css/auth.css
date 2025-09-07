@@ -1,0 +1,123 @@
+
+.form-group {
+    margin-bottom: 16px;
+  }
+  
+  .form-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 8px;
+  }
+  
+  .input-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    min-width: 120px;
+  }
+  
+  .form-input {
+    width: 100%;
+    padding: 14px 44px 14px 14px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 15px;
+    transition: border-color 0.2s;
+    background: #fff;
+    box-sizing: border-box;
+    display: block;
+  }
+  
+  .form-input:focus {
+    outline: none;
+    border-color: #4285f4;
+  }
+  
+  .input-icon {
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: 18px;
+    pointer-events: none;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+.toggle-password-btn {
+  background: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
+  background: #ffffff !important;
+  font-size: 1rem;
+}
+
+.signin_signup-btn {
+  width: 100%;
+  max-width: 500px;
+  min-width: 320px;
+  padding: 14px;
+  background: #4285f4;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 17px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-bottom: 24px;
+  box-sizing: border-box;
+}
+
+.signin_signup-btn:hover {
+  background: #3d6bff;
+}
+
+.signin_signup-btn-text {
+  color: #666;
+  font-size: 14px;
+  text-align: left;
+}
+
+.signup-link {
+  color: #4F7CFF;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.signup-link:hover {
+  text-decoration: underline;
+}
+
+@media only screen and (max-width: 600px) {
+  .form-input {
+    padding: 14px 45px 14px 14px;
+    font-size: 16px; 
+  }
+
+  .signin_signup-btn {
+    padding: 14px;
+    font-size: 16px;
+  }
+}
+
+@media only screen and (max-width: 992px) {
+  .signin_signup-btn,
+  .signup-link {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}

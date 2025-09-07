@@ -1,0 +1,32 @@
+.form-error-message {
+    color: rgb(191, 6, 0);
+    font-size: 13px;
+    font-weight: 400;
+    margin-top: 2px;
+    animation: error-pop 0.25s cubic-bezier(.4,2,.6,1) 1;
+  }
+  
+  .form-group { 
+    margin-bottom: 16px; /* Match your auth.css for consistent spacing */
+  }
+  
+  .form-input.is-invalid { 
+    border-color: #d9534f !important; 
+  }
+  
+  .form-input.is-valid { 
+    border-color: #28a745 !important; 
+    box-shadow: 0 0 0 0.1rem rgba(40,167,69,.15); 
+  }
+  
+  .btn[disabled] {
+    opacity: .7; 
+    pointer-events: none;
+  }
+  
+  /* Optional: animation definition */
+  @keyframes error-pop {
+    0% { transform: scale(0.95); opacity: 0.5; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
