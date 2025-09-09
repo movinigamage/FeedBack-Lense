@@ -3,8 +3,8 @@ import { isEmail, isStrongPassword, saveToken, toggleSubmitting,
 import { postJSON } from '../api/api.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-  const SIGNIN_AFTER_SIGNUP = '/public/auth/signin.html';
-  const LANDING_AFTER_SIGNIN = '/public/public.html';
+  const SIGNIN_AFTER_SIGNUP = '../auth/signin.html';
+  const LANDING_AFTER_SIGNIN = '../dashboard/index.html';
 
   // live clear on typing
   document.addEventListener('input', (e) => {

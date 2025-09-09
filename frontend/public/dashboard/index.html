@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - FeedbackLens</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../../css/dashboard.css">
+</head>
+
+<body class="grey lighten-5">
+    <!-- Navigation Sidebar -->
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <!-- Logo Section -->
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="../images/logo.png" alt="FeedbackLens Logo" class="logo-image">
+                    <div class="logo-text">
+                        <span class="logo-name">FeedbackLens</span>
+                        <span class="logo-tagline">TECHNOLOGY</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="nav-item active">
+                        <a href="index.html" class="nav-link">
+                            <i class="fas fa-tachometer-alt nav-icon"></i>
+                            <span class="nav-text">Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="create-survey.html" class="nav-link">
+                            <i class="fas fa-plus-circle nav-icon"></i>
+                            <span class="nav-text">Create Surveys</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#invitations" class="nav-link">
+                            <i class="fas fa-envelope nav-icon"></i>
+                            <span class="nav-text">Invitations</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#analytics" class="nav-link">
+                            <i class="fas fa-chart-line nav-icon"></i>
+                            <span class="nav-text">Analytics</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <div class="header-content">
+                    <h1 class="page-title">Dashboard</h1>
+                    <div class="user-section">
+                        <div class="user-info">
+                            <i class="fas fa-bell notification-icon"></i>
+                            <div class="user-profile">
+                                <img src="../images/profile.png" alt="User Avatar" class="user-avatar">
+                                <div class="user-details">
+                                    <span class="user-name" id="userName">Jonney Dep</span>
+                                    <span class="user-role">Company Manager</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="dashboard-content">
+                <!-- Welcome Section -->
+                <div class="welcome-section">
+                    <h2 class="welcome-title">Welcome back!</h2>
+                    <p class="welcome-subtitle">Here's what's happening with your surveys today.</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <i class="fas fa-poll"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number" id="totalSurveys">0</h3>
+                            <p class="stat-label">Total Surveys</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number" id="totalResponses">0</h3>
+                            <p class="stat-label">Total Responses</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number" id="activeSurveys">0</h3>
+                            <p class="stat-label">Active Surveys</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon purple">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number" id="avgResponseRate">0%</h3>
+                            <p class="stat-label">Avg Response Rate</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Dashboard Grid -->
+                <div class="dashboard-main-grid">
+                    <!-- Left Column: Created Surveys -->
+                    <div class="dashboard-left-column">
+                        <div class="section-card">
+                            <div class="section-header">
+                                <h3 class="section-title">Created Surveys</h3>
+                                <button class="btn btn-primary btn-create" onclick="location.href='create-survey.html'">
+                                    <i class="fas fa-plus"></i>
+                                    Create New
+                                </button>
+                            </div>
+
+                            <!-- Survey Cards Container -->
+                            <div class="surveys-list" id="surveysContainer">
+                                <!-- Survey cards will be dynamically inserted here -->
+                                <div class="empty-state" id="emptySurveys">
+                                    <div class="empty-icon">
+                                        <i class="fas fa-poll"></i>
+                                    </div>
+                                    <h4>No surveys yet</h4>
+                                    <p>Create your first survey to get started with collecting feedback.</p>
+                                    <a href="create-survey.html" class="btn btn-primary">Create Survey</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Other Features -->
+                    <div class="dashboard-right-column">
+                        <!-- Received Invitations Section -->
+                        <div class="section-card">
+                            <div class="section-header">
+                                <h3 class="section-title">Received Invitations</h3>
+                            </div>
+                            <div class="invitations-list">
+                                <!-- Sample invitation cards matching the screenshot -->
+                                <div class="invitation-card">
+                                    <div class="invitation-header">
+                                        <h4 class="invitation-title">Team Performance Review</h4>
+                                        <span class="invitation-date">Due: Dec 15</span>
+                                    </div>
+                                    <p class="invitation-from">From: Sarah Johnson</p>
+                                    <button class="btn btn-primary btn-take-survey">Take Survey</button>
+                                </div>
+                                
+                                <div class="invitation-card">
+                                    <div class="invitation-header">
+                                        <h4 class="invitation-title">Office Environment Feedback</h4>
+                                        <span class="invitation-date">Due: Dec 20</span>
+                                    </div>
+                                    <p class="invitation-from">From: HR Department</p>
+                                    <button class="btn btn-primary btn-take-survey">Take Survey</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Analytics Overview Section -->
+                        <div class="section-card">
+                            <div class="section-header">
+                                <h3 class="section-title">Analytics Overview</h3>
+                                <a href="#analytics" class="link-view-full">View Full Analytics</a>
+                            </div>
+                            <div class="analytics-content">
+                                <!-- Sample chart placeholder -->
+                                <div class="analytics-chart">
+                                    <h5 class="chart-title">Response Trends</h5>
+                                    <div class="chart-placeholder">
+                                        <div class="chart-line"></div>
+                                        <div class="chart-data">
+                                            <div class="data-point" style="left: 15%; height: 40%"></div>
+                                            <div class="data-point" style="left: 30%; height: 60%"></div>
+                                            <div class="data-point" style="left: 45%; height: 45%"></div>
+                                            <div class="data-point" style="left: 60%; height: 75%"></div>
+                                            <div class="data-point" style="left: 75%; height: 55%"></div>
+                                            <div class="data-point" style="left: 90%; height: 80%"></div>
+                                        </div>
+                                        <div class="chart-labels">
+                                            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Recent Activity -->
+                                <div class="recent-activity">
+                                    <h5 class="activity-title">Recent Activity</h5>
+                                    <div class="activity-item">
+                                        <div class="activity-icon green">
+                                            <i class="fas fa-user-plus"></i>
+                                        </div>
+                                        <div class="activity-text">
+                                            <span class="activity-action">New response to Customer Satisfaction Q4</span>
+                                            <span class="activity-time">2 min ago</span>
+                                        </div>
+                                    </div>
+                                    <div class="activity-item">
+                                        <div class="activity-icon blue">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </div>
+                                        <div class="activity-text">
+                                            <span class="activity-action">Survey invitation sent to 15 participants</span>
+                                            <span class="activity-time">1 hour ago</span>
+                                        </div>
+                                    </div>
+                                    <div class="activity-item">
+                                        <div class="activity-icon orange">
+                                            <i class="fas fa-edit"></i>
+                                        </div>
+                                        <div class="activity-text">
+                                            <span class="activity-action">Product Feedback Survey updated</span>
+                                            <span class="activity-time">3 hours ago</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Loading dashboard...</p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script type="module" src="../../js/api/api.js"></script>
+    <script type="module" src="../../js/dashboard/dashboard.js"></script>
+</body>
+
+</html>
