@@ -53,66 +53,61 @@ exports.getHomepageData = async (userId) => {
 // Calculate comprehensive user statistics
 exports.calculateUserStats = async (userId) => {
   try {
+    // Ensure we have a valid ObjectId
+    const mongoose = require('mongoose');
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+
     // Count surveys created by user
-    const totalSurveysCreated = await Survey.countDocuments({ creatorId: userId });
+    const totalSurveysCreated = await Survey.countDocuments({ creatorId: userObjectId });
 
     // Count invitations received by user
-    const totalInvitationsReceived = await Invitation.countDocuments({ userId });
+    const totalInvitationsReceived = await Invitation.countDocuments({ userId: userObjectId });
 
     // Count responses given by user (completed invitations)
     const totalResponsesGiven = await Invitation.countDocuments({ 
-      userId, 
+      userId: userObjectId, 
       status: 'completed' 
     });
 
-    // Count active vs closed surveys created
-    const surveyStatusStats = await Survey.aggregate([
-      { $match: { creatorId: userId } },
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 }
-        }
-      }
-    ]);
+    // Count active vs closed surveys created - using separate queries for reliability
+    const activeSurveys = await Survey.countDocuments({ 
+      creatorId: userObjectId, 
+      status: 'active' 
+    });
+    
+    const closedSurveys = await Survey.countDocuments({ 
+      creatorId: userObjectId, 
+      status: 'closed' 
+    });
 
-    const activeSurveys = surveyStatusStats.find(s => s._id === 'active')?.count || 0;
-    const closedSurveys = surveyStatusStats.find(s => s._id === 'closed')?.count || 0;
+    // Get response rate for user's surveys - Simpler approach
+    // First, find all surveys created by this user
+    const userSurveys = await Survey.find({ creatorId: userObjectId }).select('_id');
+    const surveyIds = userSurveys.map(survey => survey._id);
+    
+    // Then count invitations to those surveys
+    let totalSent = 0;
+    let totalCompleted = 0;
+    
+    if (surveyIds.length > 0) {
+      totalSent = await Invitation.countDocuments({ 
+        surveyId: { $in: surveyIds } 
+      });
+      
+      totalCompleted = await Invitation.countDocuments({ 
+        surveyId: { $in: surveyIds },
+        status: 'completed'
+      });
+    }
 
-    // Get response rate for user's surveys
-    const surveyResponseStats = await Invitation.aggregate([
-      {
-        $lookup: {
-          from: 'surveys',
-          localField: 'surveyId',
-          foreignField: '_id',
-          as: 'survey'
-        }
-      },
-      {
-        $match: {
-          'survey.creatorId': userId
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          totalSent: { $sum: 1 },
-          totalCompleted: {
-            $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] }
-          }
-        }
-      }
-    ]);
-
-    const responseStats = surveyResponseStats[0] || { totalSent: 0, totalCompleted: 0 };
+    const responseStats = { totalSent, totalCompleted };
     const overallResponseRate = responseStats.totalSent > 0 
       ? Math.round((responseStats.totalCompleted / responseStats.totalSent) * 100)
       : 0;
 
     // Count pending invitations received
     const pendingInvitations = await Invitation.countDocuments({ 
-      userId, 
+      userId: userObjectId, 
       status: 'sent' 
     });
 
