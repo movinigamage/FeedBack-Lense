@@ -1,11 +1,144 @@
-// Dashboard business logic: homepage data aggregation, user statistics
+// Enhanced Dashboard Service with Simple Numerical Analysis
+// services/dashboardService.js
+
 const surveyService = require('./surveyService');
 const invitationService = require('./invitationService');
 const User = require('../models/User');
 const Survey = require('../models/Survey');
 const Invitation = require('../models/Invitation');
+const Response = require('../models/Response');
 
-// Get comprehensive homepage data for user
+// Simple numerical statistics calculation
+const calculateNumericalStats = (values) => {
+  if (!values.length) return null;
+  
+  const numbers = values.filter(v => !isNaN(parseFloat(v))).map(v => parseFloat(v));
+  if (!numbers.length) return null;
+  
+  numbers.sort((a, b) => a - b);
+  
+  const sum = numbers.reduce((a, b) => a + b, 0);
+  const mean = sum / numbers.length;
+  const median = numbers.length % 2 === 0 
+    ? (numbers[numbers.length / 2 - 1] + numbers[numbers.length / 2]) / 2
+    : numbers[Math.floor(numbers.length / 2)];
+  
+  // Mode calculation
+  const counts = {};
+  numbers.forEach(num => counts[num] = (counts[num] || 0) + 1);
+  const mode = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+  
+  return {
+    count: numbers.length,
+    mean: Math.round(mean * 100) / 100,
+    median,
+    mode: parseFloat(mode),
+    min: numbers[0],
+    max: numbers[numbers.length - 1]
+  };
+};
+
+// Check if responses are numerical
+const isNumericalQuestion = (answers) => {
+  if (!answers.length) return false;
+  
+  const numericalCount = answers.filter(answer => {
+    const value = String(answer).trim();
+    return value && !isNaN(parseFloat(value)) && isFinite(value);
+  }).length;
+  
+  // Consider it numerical if at least 80% of responses are numbers
+  return numericalCount >= answers.length * 0.8;
+};
+
+// Calculate simple survey analysis (numerical only)
+const calculateSurveyAnalysis = async (surveyId) => {
+  try {
+    // Get all responses for this survey
+    const responses = await Response.find({ surveyId })
+      .sort({ submittedAt: -1 })
+      .lean();
+    
+    if (!responses.length) {
+      return {
+        questionAnalysis: [],
+        overallMetrics: {
+          totalResponses: 0,
+          avgCompletionTime: 0
+        }
+      };
+    }
+
+    // Aggregate responses by question
+    const questionData = {};
+    const completionTimes = [];
+    
+    responses.forEach(response => {
+      if (response.completionTime) {
+        completionTimes.push(response.completionTime);
+      }
+      
+      response.responses.forEach(({ questionId, questionText, answer }) => {
+        if (!questionData[questionId]) {
+          questionData[questionId] = {
+            questionId,
+            questionText,
+            answers: []
+          };
+        }
+        if (answer && String(answer).trim()) {
+          questionData[questionId].answers.push(answer);
+        }
+      });
+    });
+
+    // Calculate analysis only for numerical questions
+    const questionAnalysis = Object.values(questionData)
+      .map(({ questionId, questionText, answers }) => {
+        if (!isNumericalQuestion(answers)) {
+          return null; // Skip non-numerical questions
+        }
+        
+        const statistics = calculateNumericalStats(answers);
+        
+        return {
+          questionId,
+          questionText,
+          type: 'numerical',
+          responseCount: answers.length,
+          statistics
+        };
+      })
+      .filter(q => q && q.statistics); // Only include questions with valid statistics
+
+    // Calculate overall metrics
+    const avgCompletionTime = completionTimes.length > 0 
+      ? Math.round(completionTimes.reduce((a, b) => a + b, 0) / completionTimes.length)
+      : 0;
+
+    const overallMetrics = {
+      totalResponses: responses.length,
+      avgCompletionTime
+    };
+
+    return {
+      questionAnalysis,
+      overallMetrics
+    };
+
+  } catch (error) {
+    console.error('Error calculating survey analysis:', error);
+    return {
+      questionAnalysis: [],
+      overallMetrics: {
+        totalResponses: 0,
+        avgCompletionTime: 0
+      }
+    };
+  }
+};
+
+// Get comprehensive homepage data for user (existing function)
 exports.getHomepageData = async (userId) => {
   try {
     // Get user info
@@ -36,7 +169,6 @@ exports.getHomepageData = async (userId) => {
       receivedInvitations,
       stats
     };
-
   } catch (error) {
     // Re-throw custom errors, wrap others
     if (error.code) {
@@ -50,7 +182,7 @@ exports.getHomepageData = async (userId) => {
   }
 };
 
-// Calculate comprehensive user statistics
+// Calculate comprehensive user statistics (existing function)
 exports.calculateUserStats = async (userId) => {
   try {
     // Count surveys created by user
@@ -127,7 +259,6 @@ exports.calculateUserStats = async (userId) => {
       totalInvitationsSent: responseStats.totalSent,
       totalResponsesReceived: responseStats.totalCompleted
     };
-
   } catch (error) {
     console.error('Error calculating user stats:', error);
     // Return default stats on error
@@ -145,7 +276,7 @@ exports.calculateUserStats = async (userId) => {
   }
 };
 
-// Get survey dashboard data (for individual survey analytics)
+// ENHANCED: Get survey dashboard data with simple numerical analysis
 exports.getSurveyDashboard = async (surveyId, creatorId) => {
   try {
     // Get survey details with creator verification
@@ -160,6 +291,8 @@ exports.getSurveyDashboard = async (surveyId, creatorId) => {
     // Get recent activity (last 10 invitations)
     const recentInvitations = invitations.slice(0, 10);
 
+    const analysis = await calculateSurveyAnalysis(surveyId);
+
     return {
       survey,
       stats: {
@@ -167,9 +300,9 @@ exports.getSurveyDashboard = async (surveyId, creatorId) => {
         ...invitationStats
       },
       invitations: recentInvitations,
+      analysis, 
       lastUpdated: new Date()
     };
-
   } catch (error) {
     if (error.code) {
       throw error;
@@ -181,3 +314,5 @@ exports.getSurveyDashboard = async (surveyId, creatorId) => {
     }
   }
 };
+
+exports.calculateSurveyAnalysis = calculateSurveyAnalysis;
