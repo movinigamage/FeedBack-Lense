@@ -412,6 +412,14 @@ function setupEventListeners() {
         });
     }
     
+    // Back to success page from invitation section
+    const backToSuccess = document.getElementById('backToSuccess');
+    if (backToSuccess) {
+        backToSuccess.addEventListener('click', function() {
+            showStep(4); // Go back to success page (step 4)
+        });
+    }
+    
     // Step navigation
     setupStepNavigation();
 }
@@ -754,7 +762,8 @@ function updateStepIndicator(currentStep) {
         1: 'Upload CSV',
         2: 'Preview Questions',
         3: 'Setup Survey',
-        4: 'Complete'
+        4: 'Complete',
+        5: 'Invite Participants'
     };
     
     const pageTitle = document.querySelector('.page-title');
@@ -1869,8 +1878,11 @@ async function enhancedSaveSurvey() {
         
         if (result.success) {
             // Success - show step 4 and update with real survey data
+            console.log('Survey creation successful:', result);
+            console.log('Survey data:', result.data);
             showLoading(false);
             showStep(4);
+            console.log('sgdhjasgdhjsagdjhasdg',result.data.survey)
             updateSuccessPage(result.data.survey);
             
             M.toast({
@@ -1882,6 +1894,7 @@ async function enhancedSaveSurvey() {
             console.log('Survey created successfully:', result.data.survey);
         } else {
             // Handle API errors
+            console.log('Survey creation failed:', result);
             showLoading(false);
             handleSurveyCreationError(result);
         }
@@ -1922,7 +1935,9 @@ async function submitSurvey() {
     
     // Call API to create survey
     const result = await createSurvey(surveyData);
-    
+
+
+    console.log('Survey created successfully: ...................', result);
     return result;
 }
 
@@ -1963,15 +1978,23 @@ function handleSurveyCreationError(result) {
 function updateSuccessPage(surveyData = null) {
     const surveyId = document.getElementById('surveyId');
     const creationDate = document.getElementById('creationDate');
-    
+
     if (surveyId) {
-        if (surveyData && surveyData._id) {
+        if (surveyData && surveyData.id) {
             // Use real survey ID from API response
-            surveyId.textContent = surveyData._id.substring(0, 8).toUpperCase();
+            console.log('Full survey ID from API:', surveyData.id);
+            console.log('Survey ID length:', surveyData.id.length);
+            surveyId.textContent = surveyData.id.substring(0, 8).toUpperCase();
+            // Store full ID in data attribute for API calls
+            surveyId.setAttribute('data-full-id', surveyData.id);
+            console.log('Stored data-full-id:', surveyId.getAttribute('data-full-id'));
         } else {
             // Fallback to demo ID
             const demoId = Math.random().toString(36).substr(2, 9).toUpperCase();
             surveyId.textContent = demoId;
+            // For demo, we can't make real API calls, so store the demo ID
+            surveyId.setAttribute('data-full-id', demoId);
+            console.log('Using demo ID:', demoId);
         }
     }
     
@@ -2016,12 +2039,19 @@ function updateSuccessPage(surveyData = null) {
  * Phase 6: Setup success page action buttons
  */
 function setupSuccessPageActions(surveyData) {
+    console.log('setupSuccessPageActions called with:', surveyData);
+    
     // Invite Participants button
-    const inviteBtn = document.querySelector('.success-actions .btn:first-child');
+    const inviteBtn = document.getElementById('inviteParticipantsBtn');
+    console.log('Found invite button:', inviteBtn);
+    
     if (inviteBtn) {
         inviteBtn.onclick = function() {
+            console.log('Invite button clicked!');
             handleInviteParticipants(surveyData);
         };
+    } else {
+        console.error('Invite button not found!');
     }
     
     // Return to Dashboard button
@@ -2045,42 +2075,55 @@ function setupSuccessPageActions(surveyData) {
  * Phase 6: Handle invite participants action
  */
 function handleInviteParticipants(surveyData) {
-    if (!surveyData || !surveyData._id) {
-        M.toast({
-            html: '<i class="fas fa-exclamation-triangle"></i> Survey data not available for invitations',
-            classes: 'error-toast',
-            displayLength: 3000
-        });
-        return;
+    console.log('handleInviteParticipants called with:', surveyData);
+    console.log('currentSurveyData.savedSurvey:', currentSurveyData.savedSurvey);
+    
+    // Try to get survey data from parameter or fallback to saved survey data
+    let surveyInfo = surveyData;
+    if (!surveyInfo || !surveyInfo._id) {
+        surveyInfo = currentSurveyData.savedSurvey;
+    }
+    
+    // If still no survey data, try to get it from current survey data
+    if (!surveyInfo || !surveyInfo._id) {
+        // Create a mock survey ID from current survey data for demo purposes
+        if (currentSurveyData.title) {
+            surveyInfo = {
+                _id: 'demo-survey-' + Date.now(),
+                title: currentSurveyData.title
+            };
+            console.log('Using demo survey data:', surveyInfo);
+        } else {
+            // Last resort - create a generic survey for demo
+            surveyInfo = {
+                _id: 'demo-survey-' + Date.now(),
+                title: 'Survey'
+            };
+            console.log('Using generic demo survey data:', surveyInfo);
+        }
     }
     
     // Store survey ID for invitation process
-    sessionStorage.setItem('surveyForInvitation', surveyData._id);
+    sessionStorage.setItem('surveyForInvitation', surveyInfo._id);
     
-    // Show success message and redirect to invitations page (when available)
+    // Show the invitation section (step5)
+    showStep(5);
+    
+    // Initialize invitation functionality after a short delay to ensure DOM is ready
+    setTimeout(() => {
+        if (typeof InvitationApp !== 'undefined') {
+            window.invitationApp = new InvitationApp();
+        }
+    }, 100);
+    
+    // Show success message
     M.toast({
-        html: '<i class="fas fa-info-circle"></i> Invitation feature coming soon! Survey ID saved.',
-        classes: 'info-toast',
-        displayLength: 4000
+        html: '<i class="fas fa-envelope"></i> Ready to send invitations!',
+        classes: 'success-toast',
+        displayLength: 3000
     });
     
-    // For now, copy survey link to clipboard
-    const surveyLink = `${window.location.origin}/survey/${surveyData._id}`;
-    navigator.clipboard.writeText(surveyLink).then(() => {
-        M.toast({
-            html: '<i class="fas fa-check"></i> Survey link copied to clipboard!',
-            classes: 'success-toast',
-            displayLength: 3000
-        });
-    }).catch(() => {
-        // Fallback for browsers that don't support clipboard API
-        console.log('Survey link:', surveyLink);
-        M.toast({
-            html: '<i class="fas fa-info-circle"></i> Survey link logged to console',
-            classes: 'info-toast',
-            displayLength: 3000
-        });
-    });
+    console.log('Showing invitation section for survey:', surveyInfo._id);
 }
 
 /**
