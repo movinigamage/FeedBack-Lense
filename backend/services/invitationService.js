@@ -339,9 +339,13 @@ exports.validateInvitationAccess = async (surveyId, token, userId) => {
 
 // Get invitation statistics for dashboard
 exports.getInvitationStats = async (surveyId) => {
+  // Convert surveyId to ObjectId for aggregation
+  const mongoose = require('mongoose');
+  const objectId = new mongoose.Types.ObjectId(surveyId);
+  
   const stats = await Invitation.aggregate([
-    { $match: { surveyId: surveyId } },
-    {
+    { $match: { surveyId: objectId } },
+    { 
       $group: {
         _id: '$surveyId',
         totalInvitations: { $sum: 1 },
