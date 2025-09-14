@@ -4,7 +4,7 @@ import { postJSON } from '../api/api.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const SIGNIN_AFTER_SIGNUP = '../auth/signin.html';
-  const LANDING_AFTER_SIGNIN = '../dashboard/index.html';
+  const LANDING_AFTER_SIGNIN = '/public/dashboard/index.html';
 
   // live clear on typing
   document.addEventListener('input', (e) => {

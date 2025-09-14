@@ -1,7 +1,14 @@
 // Dashboard functionality - Phase 6: Complete Implementation
 // Fetches and displays user's created surveys with real-time statistics
 
-import { getAuthToken, getDashboardStats, getUserSurveys, requireAuth } from '../api/api.js';
+import {
+    getAuthToken,
+    getDashboardStats,
+    getReceivedInvitations,
+    getReceivedInvitationsFromUser,
+    getUserSurveys,
+    requireAuth
+} from '../api/api.js';
 
 // Global state for dashboard data
 let dashboardData = {
@@ -10,20 +17,20 @@ let dashboardData = {
     isLoading: false
 };
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log('Dashboard loaded - Phase 6: Complete Implementation');
-    
+
     // Check authentication using enhanced method
     if (!checkAuthentication()) {
         return;
     }
-    
+
     // Check for success messages from survey creation
     checkForSuccessMessages();
-    
+
     // Initialize dashboard
     initializeDashboard();
-    
+
     // Setup auto-refresh for real-time updates
     setupAutoRefresh();
 });
@@ -66,7 +73,7 @@ function initializeDashboard() {
     // Initialize dashboard components
     setupEventListeners();
     loadDashboardData();
-    
+
     // Initialize Materialize components
     M.AutoInit();
 }
@@ -78,29 +85,29 @@ function setupEventListeners() {
     // Create survey button
     const createSurveyBtn = document.querySelector('.btn-primary');
     if (createSurveyBtn) {
-        createSurveyBtn.addEventListener('click', function(e) {
+        createSurveyBtn.addEventListener('click', function (e) {
             e.preventDefault();
             window.location.href = 'create-survey.html';
         });
     }
-    
+
     // Refresh button (if exists)
     const refreshBtn = document.getElementById('refreshDashboard');
     if (refreshBtn) {
-        refreshBtn.addEventListener('click', function(e) {
+        refreshBtn.addEventListener('click', function (e) {
             e.preventDefault();
             refreshDashboard();
         });
     }
-    
+
     // Search functionality for surveys
     const searchInput = document.getElementById('surveySearch');
     if (searchInput) {
-        searchInput.addEventListener('input', function(e) {
+        searchInput.addEventListener('input', function (e) {
             filterSurveys(e.target.value);
         });
     }
-    
+
     // Logout functionality
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
@@ -116,17 +123,19 @@ async function loadDashboardData() {
         console.log('Dashboard data is already loading...');
         return;
     }
-    
+
     dashboardData.isLoading = true;
     showLoading(true);
-    
+
+    renderInvitationsListFromUser()
+
     try {
         // Load both stats and surveys concurrently
         const [statsResult, surveysResult] = await Promise.all([
             getDashboardStats(),
             getUserSurveys()
         ]);
-        
+
         // Handle stats data
         if (statsResult.success && statsResult.data) {
             dashboardData.stats = statsResult.data;
@@ -135,7 +144,7 @@ async function loadDashboardData() {
             console.warn('Failed to load dashboard stats:', statsResult);
             updateStats(getDefaultStats());
         }
-        
+
         // Handle surveys data
         if (surveysResult.success && surveysResult.data) {
             dashboardData.surveys = surveysResult.data.surveys || surveysResult.data || [];
@@ -145,7 +154,7 @@ async function loadDashboardData() {
             dashboardData.surveys = [];
             updateSurveysDisplay([]);
         }
-        
+
     } catch (error) {
         console.error('Error loading dashboard data:', error);
         // Show error message to user
@@ -154,7 +163,7 @@ async function loadDashboardData() {
             classes: 'error-toast',
             displayLength: 4000
         });
-        
+
         // Load default data
         updateStats(getDefaultStats());
         updateSurveysDisplay([]);
@@ -186,7 +195,7 @@ function updateStats(stats) {
     const totalResponsesEl = document.getElementById('totalResponses');
     const activeSurveysEl = document.getElementById('activeSurveys');
     const avgResponseRateEl = document.getElementById('avgResponseRate');
-    
+
     if (totalSurveysEl) animateStatNumber(totalSurveysEl, stats.totalSurveys || 0);
     if (totalResponsesEl) animateStatNumber(totalResponsesEl, stats.totalResponses || 0);
     if (activeSurveysEl) animateStatNumber(activeSurveysEl, stats.activeSurveys || 0);
@@ -194,7 +203,7 @@ function updateStats(stats) {
         const rate = stats.avgResponseRate || '0%';
         avgResponseRateEl.textContent = typeof rate === 'number' ? `${rate}%` : rate;
     }
-    
+
     console.log('Dashboard stats updated:', stats);
 }
 
@@ -207,19 +216,19 @@ function animateStatNumber(element, targetValue) {
     const stepTime = 50; // Update every 50ms
     const steps = duration / stepTime;
     const increment = (targetValue - startValue) / steps;
-    
+
     let currentValue = startValue;
     let step = 0;
-    
+
     const timer = setInterval(() => {
         step++;
         currentValue += increment;
-        
+
         if (step >= steps) {
             currentValue = targetValue;
             clearInterval(timer);
         }
-        
+
         element.textContent = Math.round(currentValue);
     }, stepTime);
 }
@@ -230,21 +239,21 @@ function animateStatNumber(element, targetValue) {
 function updateSurveysDisplay(surveys) {
     const surveysContainer = document.getElementById('surveysContainer');
     const emptyState = document.getElementById('emptySurveys');
-    
+
     if (!surveysContainer) {
         console.error('Surveys container not found');
         return;
     }
-    
+
     // Update the total surveys count in stats
     const totalSurveysElement = document.getElementById('totalSurveys');
     if (totalSurveysElement && surveys && surveys.length > 0) {
         animateStatNumber(totalSurveysElement, surveys.length);
     }
-    
+
     // Clear existing content
     surveysContainer.innerHTML = '';
-    
+
     if (!surveys || surveys.length === 0) {
         // Show empty state
         if (emptyState) {
@@ -254,14 +263,14 @@ function updateSurveysDisplay(surveys) {
         }
         return;
     }
-    
+
     // Generate survey cards - limit to first 5 for compact display
     const surveysToShow = surveys.slice(0, 5);
     surveysToShow.forEach(survey => {
         const surveyCard = createSurveyCard(survey);
         surveysContainer.appendChild(surveyCard);
     });
-    
+
     // Add "View All" link if there are more than 5 surveys
     if (surveys.length > 5) {
         const viewAllDiv = document.createElement('div');
@@ -273,23 +282,127 @@ function updateSurveysDisplay(surveys) {
         `;
         surveysContainer.appendChild(viewAllDiv);
     }
-    
+
     console.log(`Displayed ${surveysToShow.length} surveys out of ${surveys.length} total`);
 }
+
 
 /**
  * Phase 6: Create individual survey card with complete functionality
  */
+
+
+
+async function renderInvitationsListFromUser() {
+    const list = document.getElementById('invitations-list');
+    if (!list) return;
+
+    try {
+        // Fetch invitations from API
+        const result = await getReceivedInvitationsFromUser();
+        console.log('API result:', result);
+
+        if (!result.success) {
+            list.innerHTML = '<div style="text-align:center; color:#ff4444; padding:32px 0;">Failed to load invitations.</div>';
+            return;
+        }
+
+        // Store invitations locally
+        const invitations = result.data || [];
+        console.log('Invitations:', invitations);
+
+        // list.innerHTML = '';
+
+        if (!invitations.length) {
+            list.innerHTML = '<div style="text-align:center; color:#888; padding:32px 0;">No invitations found.</div>';
+            return;
+        }
+
+        // Render each invitation
+        invitations.forEach(inv => {
+            // Calculate due date (30 days from creation)
+            let dueDateText = 'No due date';
+            if (inv.createdAt) {
+                const createdDate = new Date(inv.createdAt);
+                const dueDate = new Date(createdDate);
+                dueDate.setDate(dueDate.getDate() + 30);
+                dueDateText = `Due: ${dueDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+            }
+
+            const sender = inv.creatorName ? `From: ${inv.creatorName}` : 'From: Unknown sender';
+
+            const item = document.createElement('div');
+            item.className = 'invitation-card';
+            item.innerHTML = `
+                <div class="invitation-header" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0; margin-bottom:8px;">
+                    <div style="display:flex;flex-direction:column;gap:2px;">
+                        <span class="invitation-title" style="font-size:16px;font-weight:500;margin:0;">${inv.surveyTitle || 'Untitled Survey'}</span>
+                        <span class="invitation-from" style="font-size:13px;color:#6c757d;margin:0;">${sender}</span>
+                    </div>
+                    <button class="take-survey-btn" style="margin:0 0 0 12px;padding:6px 16px;font-size:14px;min-width:90px;" data-surveylink="${inv.surveyLink}" data-invitationid="${inv.id}">
+                        ${inv.status === 'completed' ? 'View Results' : 'Take Survey'}
+                    </button>
+                </div>
+                <span class="invitation-date" style="font-size:12px;color:#888;margin-top:2px;display:block;">${dueDateText}</span>
+
+            `;
+            list.appendChild(item);
+        });
+
+        document.addEventListener("click", function (e) {
+            if (e.target && e.target.classList.contains("take-survey-btn")) {
+                const surveyLink = e.target.getAttribute("data-surveylink");
+                const invitationId = e.target.getAttribute("data-invitationid");
+
+                const id1 = surveyLink.split("/survey/")[1].split("?")[0];
+                console.log("Survey ID:", id1);  // 👉 68c465cf90313f1bd961daae
+
+                // Method 2: Regex
+                const match = surveyLink.match(/\/survey\/([^?]+)/);
+                const id2 = match ? match[1] : null;
+                console.log("Survey ID (regex):", id2);
+
+                // Redirect to new HTML page with ID passed in query string
+                // Example: /survey.html?id=68c465cf90313f1bd961daae&link=...
+                window.location.href = `/public/dashboard/take-survey.html?id=${id2}&link=${encodeURIComponent(surveyLink)}`;
+            }
+        });
+
+        // Add event listeners to buttons
+        document.querySelectorAll('.btn-take-survey').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const surveyLink = e.target.getAttribute('data-surveylink');
+                const invitationId = e.target.getAttribute('data-invitationid');
+                navigateToTakeSurvey(surveyLink, invitationId);
+            });
+        });
+
+    } catch (error) {
+        console.error('Error rendering invitations:', error);
+        list.innerHTML = '<div style="text-align:center; color:#ff4444; padding:32px 0;">Error loading invitations.</div>';
+    }
+}
+
+
+
+// Make sure this function is defined
+function navigateToTakeSurvey(surveyLink, invitationId) {
+    console.log('Navigating to survey:', surveyLink, 'with invitation:', invitationId);
+    // Implement your navigation logic here
+    // window.location.href = surveyLink;
+}
+
+
 function createSurveyCard(survey) {
     const card = document.createElement('div');
     card.className = 'survey-card';
     card.setAttribute('data-survey-id', survey._id);
-    
+
     // Calculate response rate
-    const responseRate = survey.totalResponses > 0 && survey.maxResponses > 0 
+    const responseRate = survey.totalResponses > 0 && survey.maxResponses > 0
         ? Math.round((survey.totalResponses / survey.maxResponses) * 100)
         : 0;
-    
+
     // Format creation date
     const createdDate = new Date(survey.createdAt);
     const formattedDate = createdDate.toLocaleDateString('en-US', {
@@ -297,11 +410,13 @@ function createSurveyCard(survey) {
         day: 'numeric',
         year: 'numeric'
     });
+
     
+
     // Determine status
-    const status = survey.isActive ? 'Active' : 'Draft';
-    const statusClass = survey.isActive ? 'status-active' : 'status-draft';
-    
+    const status = survey.status === 'active' ? 'Active' : 'Draft';
+    const statusClass = survey.status === 'active' ? 'status-active' : 'status-draft';
+
     card.innerHTML = `
         <div class="card-header">
             <h4 class="survey-title">${escapeHtml(survey.title)}</h4>
@@ -315,8 +430,8 @@ function createSurveyCard(survey) {
             </div>
             <div class="meta-item">
                 <i class="fas fa-question-circle"></i>
-                <span>${survey.questions?.length || 0} Questions</span>
-            </div>
+                <span>${survey.questionCount || 0} Questions</span>            
+                </div>
         </div>
         
         <div class="survey-stats">
@@ -340,17 +455,17 @@ function createSurveyCard(survey) {
             <button class="btn btn-small btn-outline" onclick="shareSurvey('${survey._id}')">
                 <i class="fas fa-share"></i> Share
             </button>
-            ${survey.isActive ? 
-                `<button class="btn btn-small btn-outline red" onclick="deactivateSurvey('${survey._id}')">
+            ${survey.isActive ?
+            `<button class="btn btn-small btn-outline red" onclick="deactivateSurvey('${survey._id}')">
                     <i class="fas fa-pause"></i> Pause
                 </button>` :
-                `<button class="btn btn-small btn-primary" onclick="activateSurvey('${survey._id}')">
+            `<button class="btn btn-small btn-primary" onclick="activateSurvey('${survey._id}')">
                     <i class="fas fa-play"></i> Activate
                 </button>`
-            }
+        }
         </div>
     `;
-    
+
     return card;
 }
 
@@ -387,11 +502,11 @@ function showLoading(show) {
     if (loadingOverlay) {
         loadingOverlay.style.display = show ? 'flex' : 'none';
     }
-    
+
     // Also show/hide loading indicators on individual sections
     const statsCards = document.querySelectorAll('.stat-card');
     const surveysContainer = document.getElementById('surveysContainer');
-    
+
     if (show) {
         statsCards.forEach(card => card.classList.add('loading'));
         if (surveysContainer) surveysContainer.classList.add('loading');
@@ -404,7 +519,7 @@ function showLoading(show) {
 /**
  * Phase 6: Survey action handlers
  */
-window.viewSurvey = function(surveyId) {
+window.viewSurvey = function (surveyId) {
     console.log('Viewing survey:', surveyId);
     // Store survey ID and navigate to view page (when implemented)
     sessionStorage.setItem('viewSurveyId', surveyId);
@@ -415,7 +530,7 @@ window.viewSurvey = function(surveyId) {
     });
 };
 
-window.editSurvey = function(surveyId) {
+window.editSurvey = function (surveyId) {
     console.log('Editing survey:', surveyId);
     // Store survey ID and navigate to edit page (when implemented)
     sessionStorage.setItem('editSurveyId', surveyId);
@@ -426,12 +541,12 @@ window.editSurvey = function(surveyId) {
     });
 };
 
-window.shareSurvey = function(surveyId) {
+window.shareSurvey = function (surveyId) {
     console.log('Sharing survey:', surveyId);
-    
+
     // Generate survey share link
     const shareLink = `${window.location.origin}/survey/${surveyId}`;
-    
+
     // Copy to clipboard
     navigator.clipboard.writeText(shareLink).then(() => {
         M.toast({
@@ -450,7 +565,7 @@ window.shareSurvey = function(surveyId) {
     });
 };
 
-window.activateSurvey = function(surveyId) {
+window.activateSurvey = function (surveyId) {
     console.log('Activating survey:', surveyId);
     // TODO: Implement survey activation API call
     M.toast({
@@ -460,7 +575,7 @@ window.activateSurvey = function(surveyId) {
     });
 };
 
-window.deactivateSurvey = function(surveyId) {
+window.deactivateSurvey = function (surveyId) {
     console.log('Deactivating survey:', surveyId);
     // TODO: Implement survey deactivation API call
     M.toast({
@@ -479,18 +594,18 @@ function showAllSurveys() {
         console.error('Cannot show all surveys: container or data not found');
         return;
     }
-    
+
     // Clear existing content
     surveysContainer.innerHTML = '';
-    
+
     // Show all surveys
     dashboardData.surveys.forEach(survey => {
         const surveyCard = createSurveyCard(survey);
         surveysContainer.appendChild(surveyCard);
     });
-    
+
     console.log(`Showing all ${dashboardData.surveys.length} surveys`);
-    
+
     // Show toast notification
     M.toast({
         html: `<i class="fas fa-eye"></i> Showing all ${dashboardData.surveys.length} surveys`,
@@ -508,7 +623,7 @@ window.showAllSurveys = showAllSurveys;
 function filterSurveys(searchTerm) {
     const surveyCards = document.querySelectorAll('.survey-card');
     const term = searchTerm.toLowerCase();
-    
+
     surveyCards.forEach(card => {
         const title = card.querySelector('.survey-title').textContent.toLowerCase();
         const shouldShow = title.includes(term);
@@ -521,15 +636,15 @@ function filterSurveys(searchTerm) {
  */
 async function refreshDashboard() {
     console.log('Refreshing dashboard data...');
-    
+
     M.toast({
         html: '<i class="fas fa-sync-alt"></i> Refreshing dashboard...',
         classes: 'info-toast',
         displayLength: 2000
     });
-    
+
     await loadDashboardData();
-    
+
     M.toast({
         html: '<i class="fas fa-check"></i> Dashboard refreshed!',
         classes: 'success-toast',
@@ -548,7 +663,7 @@ function setupAutoRefresh() {
             loadDashboardData();
         }
     }, 5 * 60 * 1000); // 5 minutes
-    
+
     // Also refresh when user returns to tab
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden && !dashboardData.isLoading) {
@@ -566,18 +681,27 @@ function handleLogout() {
         // Clear authentication token
         localStorage.removeItem('authToken');
         sessionStorage.clear();
-        
+
         // Redirect to login
         window.location.href = '../auth/signin.html';
     }
 }
 
+
+/**
+ * Phase 7: Create view memberlist functionality
+ */
+
+
+
 // Export functions for use in other modules or testing
-export { 
-    checkAuthentication, 
-    updateStats, 
-    showLoading, 
+export {
+    checkAuthentication,
+    updateStats,
+    showLoading,
     refreshDashboard,
     updateSurveysDisplay,
+    renderInvitationsListFromUser,
+
     dashboardData
 };

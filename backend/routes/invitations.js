@@ -6,9 +6,17 @@ const invitationController = require('../controllers/invitationController');
 router.use(requireAuth);
 
 // Get invitations received by the authenticated user
-router.get('/received', invitationController.getReceivedInvitations);
+router.post('/received', invitationController.getReceivedInvitations);
+
+router.post('/receivedInvitation', invitationController.getReceivedInvitationsFromUser);
 
 // Validate invitation access (for survey participation)
 router.get('/validate/:surveyId', invitationController.validateInvitation);
+
+
+// Send invitations to multiple users for a survey
+router.post('/send/:surveyId', invitationController.sendInvitations);
+
+
 
 module.exports = router;
