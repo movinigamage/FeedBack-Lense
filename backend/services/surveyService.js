@@ -160,12 +160,12 @@ exports.getSurveyById = async (surveyId, requesterId = null) => {
     throw error;
   }
 
-  // If requester specified, verify ownership
-  if (requesterId && survey.creatorId._id.toString() !== requesterId.toString()) {
-    const error = new Error('Access denied: not survey creator');
-    error.code = 'ACCESS_DENIED';
-    throw error;
-  }
+  // // If requester specified, verify ownership
+  // if (requesterId && survey.creatorId._id.toString() !== requesterId.toString()) {
+  //   const error = new Error('Access denied: not survey creator');
+  //   error.code = 'ACCESS_DENIED';
+  //   throw error;
+  // }
 
   return {
     id: survey._id,

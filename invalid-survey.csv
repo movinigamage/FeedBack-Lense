@@ -1,0 +1,5 @@
+questionId,questionText,type,options
+Q1,How would you rate the course overall?,likert,
+,Missing question ID,text,
+Q3,Which format do you prefer?,invalid-type,"Option1;Option2"
+Q1,Duplicate question ID,text,

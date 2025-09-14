@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In - FeedbackLense</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="../../css/auth.css">
+  <link rel="stylesheet" href="../../css/auth_validation.css">
+</head>
+
+<body class="grey lighten-5">
+  <div class="container">
+    <div class="left-section">
+      <div class="logo">
+        <a href="#" style="margin-right: 12px; display: inline-block;">
+          <img src="/public/images/logo.png" alt="FeedbackLens Logo" style="height:48px; width:auto;">
+        </a>
+        <div class="logo-text">
+          <span class="logo-name">FeedbackLens</span>
+          <span class="logo-tagline">TECHNOLOGY</span>
+        </div>
+      </div>
+
+      <h1 class="heading">Sign In with FeedbackLense</h1>
+
+      <form id="signInForm" class="auth-form" novalidate>
+        <div class="form-group">
+          <label for="email" class="form-label">Email</label>
+          <div class="input-wrapper">
+            <input type="email" id="email" name="email" class="form-input browser-default"
+              placeholder="Enter your email" required autocomplete="username" oninput="clearError('email')"
+              style="--placeholder-color:#6c757d;" />
+            <span class="input-icon"><i class="fa-solid fa-envelope"></i></span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="password" class="form-label">Password</label>
+          <div class="input-wrapper">
+            <input type="password" id="password" name="password" class="form-input browser-default"
+              placeholder="Enter your password" required autocomplete="current-password"
+              oninput="clearError('password')" style="--placeholder-color:#6c757d;" />
+
+            <!-- keep inline toggle; your JS wires toggles on signup only -->
+            <button type="button" class="toggle-password-btn" data-target="password" tabindex="-1"
+              aria-label="Show/Hide password" onclick="
+                var input = document.getElementById('password');
+                var icon = this.querySelector('i');
+                if (input.type === 'password') { input.type = 'text'; icon.classList.replace('fa-eye','fa-eye-slash'); }
+                else { input.type = 'password'; icon.classList.replace('fa-eye-slash','fa-eye'); }
+                return false;">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="signin_signup-btn" style="background:#4285f4!important;">Sign In</button>
+      </form>
+
+      <p class="signup-text" style="font-size:14px;text-align:left;margin-top:12px;margin-bottom:0;">
+        <span>Don’t have an account? </span>
+        <a href="/public/auth/signup.html" class="signup-link" style="display:inline-block;margin-left:4px;">Sign
+          Up</a>
+      </p>
+    </div>
+
+    <div class="right-section">
+      <div class="illustration">
+        <img src="/public/images/signin.svg" alt="Sign In Illustration" style="width:100%;height:auto;display:block;">
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script type="module" src="/js/api/api.js"></script>
+  <script type="module" src="/js/auth/auth_validations.js"></script>
+
+</body>
+
+</html>

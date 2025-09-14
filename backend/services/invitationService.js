@@ -6,11 +6,14 @@ const User = require('../models/User');
 // Send invitations to multiple users
 exports.sendInvitations = async ({ surveyId, creatorId, userEmails }) => {
   // Validate survey exists and creator owns it
-  const survey = await Survey.findById(surveyId);
+  let survey = await Survey.findById(surveyId);
   if (!survey) {
-    const error = new Error('Survey not found');
-    error.code = 'SURVEY_NOT_FOUND';
-    throw error;
+    survey = await Survey.findOne({ surveyCode: surveyId });
+    console.log(survey);
+  }
+
+  if (!survey) {
+    throw new Error('Survey not found');
   }
 
   if (survey.creatorId.toString() !== creatorId.toString()) {
@@ -56,19 +59,21 @@ exports.sendInvitations = async ({ surveyId, creatorId, userEmails }) => {
           };
         }
 
-        // Check for existing invitation
-        const existingInvitation = await Invitation.findOne({ 
-          surveyId, 
-          userId: user._id 
-        });
+        // // Check for existing invitation
+        // const existingInvitation = await Invitation.findOne({
+        //   surveyId,
+        //   userId: user._id
+        // });
+        //
+        // if (existingInvitation) {
+        //   return {
+        //     email,
+        //     success: false,
+        //     error: 'User already invited to this survey'
+        //   };
+        // }
 
-        if (existingInvitation) {
-          return {
-            email,
-            success: false,
-            error: 'User already invited to this survey'
-          };
-        }
+
 
         // Create invitation
         const invitation = await Invitation.create({
@@ -111,23 +116,140 @@ exports.sendInvitations = async ({ surveyId, creatorId, userEmails }) => {
 };
 
 // Get invitations received by user
-exports.getUserReceivedInvitations = async (userId) => {
-  const invitations = await Invitation.find({ userId })
-    .populate('surveyId', 'title status createdAt')
-    .populate('creatorId', 'name email')
-    .sort({ createdAt: -1 })
-    .lean();
+// Get invitations received by user
+exports.getUserReceivedInvitationsList = async (userId) => {
+  try {
+    console.log('Searching for invitations with userId:', userId);
 
-  return invitations.map(invitation => ({
-    id: invitation._id,
-    surveyTitle: invitation.surveyId.title,
-    creatorName: invitation.creatorId.name,
-    status: invitation.status,
-    createdAt: invitation.createdAt,
-    completedAt: invitation.completedAt,
-    surveyLink: invitation.inviteLink,
-    surveyStatus: invitation.surveyId.status
-  }));
+    const invitations = await Invitation.find({creatorId: userId })
+        .populate('surveyId', 'title status createdAt')
+        .populate('creatorId', 'name email')
+        .sort({ createdAt: -1 })
+        .lean();
+
+    console.log('Found invitations:', invitations.length);
+
+    return invitations.map(invitation => ({
+      id: invitation._id,
+      surveyTitle: invitation.surveyId?.title || 'Unknown Survey',
+      creatorName: invitation.creatorId?.name || 'Unknown Creator',
+      status: invitation.status,
+      createdAt: invitation.createdAt,
+      completedAt: invitation.completedAt,
+      surveyLink: invitation.inviteLink,
+      surveyStatus: invitation.surveyId?.status || 'unknown'
+    }));
+  } catch (error) {
+    console.error('Error in getUserReceivedInvitationsList:', error);
+    throw error;
+  }
+};
+
+
+exports.getUserReceivedInvitationsListFromUser = async (userId) => {
+  try {
+    console.log('Searching for invitations with userId:', userId);
+
+    const invitations = await Invitation.find({userId: userId })
+        .populate('surveyId', 'title status createdAt')
+        .populate('creatorId', 'name email')
+        .sort({ createdAt: -1 })
+        .lean();
+
+    console.log('Found invitations:', invitations.length);
+
+    return invitations.map(invitation => ({
+      id: invitation._id,
+      surveyTitle: invitation.surveyId?.title || 'Unknown Survey',
+      creatorName: invitation.creatorId?.name || 'Unknown Creator',
+      status: invitation.status,
+      createdAt: invitation.createdAt,
+      completedAt: invitation.completedAt,
+      surveyLink: invitation.inviteLink,
+      surveyStatus: invitation.surveyId?.status || 'unknown'
+    }));
+  } catch (error) {
+    console.error('Error in getUserReceivedInvitationsList:', error);
+    throw error;
+  }
+};
+
+exports.getUserReceivedInvitations = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const {
+      type = 'received', // 'received', 'sent', or 'all'
+      status, // filter by invitation status
+      surveyStatus, // filter by survey status
+      page = 1,
+      limit = 10,
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = req.query;
+
+    // Build filter object
+    const filter = {};
+
+    if (type === 'received') {
+      filter.userId = userId;
+    } else if (type === 'sent') {
+      filter.creatorId = userId;
+    } else if (type === 'all') {
+      // For admin purposes, might need additional authorization
+      filter.$or = [{ userId }, { creatorId: userId }];
+    }
+
+    // Add status filters if provided
+    if (status) {
+      filter.status = status;
+    }
+
+    // Calculate pagination
+    const skip = (page - 1) * limit;
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    // Get invitations with pagination and filtering
+    const invitations = await Invitation.find(filter)
+        .populate('surveyId', 'title status createdAt')
+        .populate('creatorId', 'name email')
+        .populate('userId', 'name email')
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean();
+
+    // Get total count for pagination
+    const totalCount = await Invitation.countDocuments(filter);
+
+    // Format response
+    const formattedInvitations = invitations.map(invitation => ({
+      id: invitation._id,
+      surveyTitle: invitation.surveyId?.title,
+      creatorName: invitation.creatorId?.name,
+      recipientName: invitation.userId?.name,
+      status: invitation.status,
+      createdAt: invitation.createdAt,
+      completedAt: invitation.completedAt,
+      surveyLink: invitation.inviteLink,
+      surveyStatus: invitation.surveyId?.status,
+      type: invitation.creatorId?._id.toString() === userId ? 'sent' : 'received'
+    }));
+
+    return res.json({
+      invitations: formattedInvitations,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit)
+      }
+    });
+
+  } catch (error) {
+    console.error('Get invitations error:', error);
+    return res.status(500).json({ error: 'Failed to load invitations' });
+  }
 };
 
 // Get invitations sent for a survey (for dashboard)

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Survey - FeedbackLens</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../../css/dashboard.css">
+    <link rel="stylesheet" href="../../css/survey-creation.css">
+    <link rel="stylesheet" href="../../css/send-invite.css">
+</head>
+
+<body class="grey lighten-5">
+    <!-- Navigation Sidebar -->
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <!-- Logo Section -->
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="../images/logo.png" alt="FeedbackLens Logo" class="logo-image">
+                    <div class="logo-text">
+                        <span class="logo-name">FeedbackLens</span>
+                        <span class="logo-tagline">TECHNOLOGY</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="index.html" class="nav-link">
+                            <i class="fas fa-tachometer-alt nav-icon"></i>
+                            <span class="nav-text">Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="my-surverys.html" class="nav-link">
+                            <i class="fas fa-plus-circle nav-icon"></i>
+                            <span class="nav-text">Create Surveys</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="invitation.html" class="nav-link">
+                            <i class="fas fa-envelope nav-icon"></i>
+                            <span class="nav-text">Invitations</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#analytics" class="nav-link">
+                            <i class="fas fa-chart-line nav-icon"></i>
+                            <span class="nav-text">Analytics</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <div class="header-content">
+                    <div class="header-left">
+                        <button class="btn-back" id="backButton" style="display: none;">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <h1 class="page-title">Create Susrveys</h1>
+                    </div>
+                    <div class="user-section">
+                        <div class="user-info">
+                            <i class="fas fa-bell notification-icon"></i>
+                            <div class="user-profile">
+                                <img src="../images/profile.png" alt="User Avatar" class="user-avatar">
+                                <div class="user-details">
+                                    <span class="user-name">Jonney Dep</span>
+                                    <span class="user-role">Company Manager</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Survey Creation Content -->
+            <div class="survey-creation-content">
+                <div class="creation-subtitle">
+                    <p>Use this page to create your surveys, the smart and simple way.</p>
+                </div>
+
+                <!-- Step 1: CSV Upload -->
+                <div class="creation-step active" id="step1">
+                    <div class="upload-section">
+                        <h3 class="upload-title">Upload the surveys Questions (CSV)</h3>
+
+                        <!-- File Upload Area -->
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-content">
+                                <div class="upload-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <p class="upload-text">
+                                    <span class="upload-link" id="uploadLink">Click to upload</span>
+                                    or drag and drop
+                                </p>
+                                <p class="upload-format">CSV format only</p>
+                            </div>
+                            <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
+                        </div>
+
+                        <!-- CSV Format Requirements -->
+                        <div class="format-requirements">
+                            <h4 class="requirements-title">Required CSV format:</h4>
+                            <ul class="requirements-list">
+                                <li>Headers: questionId, questionText, type</li>
+                                <li>Maximum 20 questions</li>
+                                <li>Supported types: text, likert, multiple-choice</li>
+                                <li>For multiple-choice: add 'options' column with semicolon-separated values</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="step-navigation">
+                        <button class="btn btn-secondary" onclick="location.href='index.html'">Back</button>
+                        <button class="btn btn-primary" id="nextStep1" disabled>Next</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: CSV Preview -->
+                <div class="creation-step" id="step2" style="display: none;">
+                    <!-- Success Message -->
+                    <div class="success-message" id="successMessage" style="display: none;">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="successText">Your Survey 'Course Feedback' uploaded successfully.</span>
+                    </div>
+
+                    <!-- Question Preview Table -->
+                    <div class="preview-section">
+                        <h4 class="preview-title">Question ID</h4>
+                        <div class="preview-table-container">
+                            <table class="preview-table" id="previewTable">
+                                <thead>
+                                    <tr>
+                                        <th>Question ID</th>
+                                        <th>Question Text</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="previewTableBody">
+                                    <!-- Questions will be dynamically inserted here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="step-navigation">
+                        <button class="btn btn-primary" id="replaceFile">
+                            <i class="fas fa-sync"></i>
+                            Replace
+                        </button>
+                        <div class="nav-right">
+                            <button class="btn btn-secondary" id="backStep2">Back</button>
+                            <button class="btn btn-primary" id="nextStep2">Next</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Survey Setup -->
+                <div class="creation-step" id="step3" style="display: none;">
+                    <h3 class="setup-title">Setup Surveys</h3>
+
+                    <!-- Survey Title Input -->
+                    <div class="title-section">
+                        <label for="surveyTitle" class="title-label">Survey Title</label>
+                        <input type="text" id="surveyTitle" class="title-input" placeholder="Enter the title here...">
+                    </div>
+
+                    <!-- Questions Setup Table -->
+                    <div class="setup-table-container">
+                        <table class="setup-table">
+                            <thead>
+                                <tr>
+                                    <th>Question ID</th>
+                                    <th>Discretion</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="setupTableBody">
+                                <!-- Questions will be dynamically inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="step-navigation">
+                        <div class="nav-left">
+                            <button class="btn btn-secondary" id="previewSurvey">Preview Survey</button>
+                        </div>
+                        <div class="nav-right">
+                            <button class="btn btn-secondary" id="backStep3">Back</button>
+                            <button class="btn btn-primary" id="saveSurvey">Save Survey</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Success Page -->
+                <div class="creation-step" id="step4" style="display: none;">
+                    <h3 class="success-page-title">Publish Surveys</h3>
+                    <div class="success-card">
+                        <div class="success-content">
+                            <div class="success-header">
+                                <h2 class="success-main-title">Survey Created Successfully</h2>
+                                <div class="success-icon-large">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+
+                            <div class="survey-details">
+                                <p class="survey-info">Survey Id : <span id="surveyId">01156</span></p>
+                                <p class="survey-info">Created : <span id="creationDate">Aug 29th 2025</span></p>
+                            </div>
+
+                            <div class="success-actions">
+                                <button class="btn btn-primary" id="inviteParticipantsBtn">Invite Participants</button>
+                                <button class="btn btn-primary" onclick="location.href='index.html'">Return to
+                                    Dashboard</button>
+                                <button class="btn btn-primary" onclick="location.reload()">Create Another
+                                    Survey</button>
+                            </div>
+
+                            <div class="success-illustration">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Invitation Section -->
+                <div class="creation-step" id="step5" style="display: none;">
+                    <div class="survey-creation-content">
+                        <div class="welcome-section">
+                            <h2 class="welcome-title">Invitations</h2>
+                            <p class="welcome-subtitle">Invite your target audience</p>
+                        </div>
+                        <div class="justify-content-center">
+                            <div class="invite-container">
+                                <!-- Invitation Form Section -->
+                                <div class="invite-section">
+                                    <div class="invite-label">Enter participant email</div>
+                                    <div class="email-input-container">
+                                        <input type="email" id="emailInput" class="email-input browser-default"
+                                            placeholder="Enter email addresses (separated by space, comma, or semicolon)">
+                                        <button class="btn send-btn waves-effect waves-light" id="sendBtn">
+                                            Send Invitation
+                                        </button>
+                                    </div>
+                                    <div id="chipsWrapper" class="chips-container"></div>
+                                </div>
+                                <!-- Invitation List Section -->
+                                <div id="invitationList"></div>
+                            </div>
+                        </div>
+
+                        <!-- Navigation Buttons for Invitation Section -->
+                        <div class="step-navigation">
+                            <button class="btn btn-secondary" id="backToSuccess">Back to Survey</button>
+                            <div class="nav-right">
+                                <button class="btn btn-primary" onclick="location.href='index.html'">Return to
+                                    Dashboard</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Creating survey...</p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script type="module" src="../../js/api/api.js"></script>
+    <script type="module" src="../../js/survey/csvValidator.js"></script>
+    <script type="module" src="../../js/survey/surveyCreation.js"></script>
+    <script type="module" src="../../js/survey/invite.js"></script>
+
+</body>
+
+</html>
