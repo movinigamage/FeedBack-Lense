@@ -35,6 +35,9 @@ app.use('/api/v1/surveys', require('./routes/surveys'));
 app.use('/api/v1/invitations', require('./routes/invitations'));
 app.use('/api/v1/dashboard', require('./routes/dashboard'));
 
+//analytics route
+app.use('/api/v1/analytics', require('./routes/analytics'));
+
 // Survey access route (for public survey participation via token)
 app.use('/survey', require('./routes/surveyAccess'));
 
