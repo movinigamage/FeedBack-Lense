@@ -21,4 +21,7 @@ router.get('/user/summary', dashboardController.getQuickSummary);
 // Polling endpoint for user dashboard statistics
 router.get('/user/stats/poll', dashboardController.pollUserDashboardStats);
 
+// Cross-survey aggregation data
+router.get('/user/cross-survey-aggregation', dashboardController.getCrossSurveyAggregation);
+
 module.exports = router;

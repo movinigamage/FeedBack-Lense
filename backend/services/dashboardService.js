@@ -377,3 +377,72 @@ exports.getUserDashboardPollingStats = async (userId) => {
   cache[cacheKey] = { data: result, timestamp: now };
   return result;
 };
+
+/**
+ * Enhanced cross-survey aggregation for dashboard:
+ * - Per-survey stats (responses, avg completion time)
+ * - Overall completion rate
+ * - Response trends (last 14 days)
+ */
+exports.getCrossSurveyAggregation = async (userId) => {
+  const mongoose = require('mongoose');
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
+  // Find all surveys created by this user
+  const surveys = await Survey.find({ creatorId: userObjectId }).select('_id title createdAt').lean();
+  const surveyIds = surveys.map(s => s._id);
+
+  let surveyAggregates = [];
+  let overallCompletionRate = 0;
+  let responseTrends = [];
+
+  if (surveyIds.length > 0) {
+    // Per-survey stats
+    surveyAggregates = await Response.aggregate([
+      { $match: { surveyId: { $in: surveyIds } } },
+      {
+        $group: {
+          _id: '$surveyId',
+          responseCount: { $sum: 1 },
+          avgCompletionTime: { $avg: '$completionTime' }
+        }
+      }
+    ]);
+
+    // Overall completion rate
+    const totalInvitations = await Invitation.countDocuments({ surveyId: { $in: surveyIds } });
+    const totalCompleted = await Invitation.countDocuments({ surveyId: { $in: surveyIds }, status: 'completed' });
+    overallCompletionRate = totalInvitations > 0 ? Math.round((totalCompleted / totalInvitations) * 100) : 0;
+
+    // Response trends (last 14 days)
+    const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+    responseTrends = await Response.aggregate([
+      { $match: { surveyId: { $in: surveyIds }, submittedAt: { $gte: fourteenDaysAgo } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$submittedAt" } },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+  }
+
+  // Map aggregates to survey info
+  const surveyStats = surveys.map(survey => {
+    const agg = surveyAggregates.find(a => String(a._id) === String(survey._id));
+    return {
+      surveyId: survey._id,
+      title: survey.title,
+      responseCount: agg ? agg.responseCount : 0,
+      avgCompletionTime: agg && agg.avgCompletionTime ? Math.round(agg.avgCompletionTime) : null
+    };
+  });
+
+  return {
+    surveyStats,
+    overallCompletionRate,
+    responseTrends,
+    lastUpdated: new Date()
+  };
+};

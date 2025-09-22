@@ -124,3 +124,13 @@ exports.pollUserDashboardStats = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch dashboard polling stats' });
   }
 };
+
+exports.getCrossSurveyAggregation = async (req, res) => {
+  try {
+    const userId = req.user && req.user._id ? req.user._id.toString() : req.userId || null;
+    const data = await dashboardService.getCrossSurveyAggregation(userId);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch cross-survey aggregation' });
+  }
+};
