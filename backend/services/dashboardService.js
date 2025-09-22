@@ -271,6 +271,8 @@ exports.calculateUserStats = async (userId) => {
   }
 };
 
+
+
 // ENHANCED: Get survey dashboard data with simple numerical analysis
 exports.getSurveyDashboard = async (surveyId, creatorId) => {
   try {
@@ -311,3 +313,67 @@ exports.getSurveyDashboard = async (surveyId, creatorId) => {
 };
 
 exports.calculateSurveyAnalysis = calculateSurveyAnalysis;
+
+const cache = {};
+const CACHE_TTL = 30 * 1000; // 30 seconds
+
+/**
+ * Optimized polling stats for dashboard with cross-survey aggregation and caching.
+ * Returns user stats + per-survey response/score aggregation.
+ */
+exports.getUserDashboardPollingStats = async (userId) => {
+  const cacheKey = `dashboard_polling_${userId}`;
+  const now = Date.now();
+
+  // Serve from cache if fresh
+  if (cache[cacheKey] && (now - cache[cacheKey].timestamp < CACHE_TTL)) {
+    return cache[cacheKey].data;
+  }
+
+  // 1. Get overall user stats (reuse your existing function)
+  const userStats = await exports.calculateUserStats(userId);
+
+  // 2. Cross-survey aggregation: For each survey created by user, get response count and average score
+  const mongoose = require('mongoose');
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
+  // Find all surveys created by this user
+  const surveys = await Survey.find({ creatorId: userObjectId }).select('_id title').lean();
+  const surveyIds = surveys.map(s => s._id);
+
+  let surveyAggregates = [];
+  if (surveyIds.length > 0) {
+    // Aggregate responses for each survey (response count, avg score if numerical)
+    surveyAggregates = await Response.aggregate([
+      { $match: { surveyId: { $in: surveyIds } } },
+      {
+        $group: {
+          _id: '$surveyId',
+          responseCount: { $sum: 1 },
+          avgScore: { $avg: '$responses.score' } // assumes 'score' field in responses array
+        }
+      }
+    ]);
+  }
+
+  // Map aggregates to survey info
+  const surveyStats = surveys.map(survey => {
+    const agg = surveyAggregates.find(a => String(a._id) === String(survey._id));
+    return {
+      surveyId: survey._id,
+      title: survey.title,
+      responseCount: agg ? agg.responseCount : 0,
+      avgScore: agg && agg.avgScore ? Math.round(agg.avgScore * 100) / 100 : null
+    };
+  });
+
+  const result = {
+    userStats,
+    surveyStats,
+    lastUpdated: new Date()
+  };
+
+  // Cache result
+  cache[cacheKey] = { data: result, timestamp: now };
+  return result;
+};

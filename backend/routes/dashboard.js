@@ -1,4 +1,5 @@
-const router = require('express').Router();
+const express = require('express');
+const router = express.Router();
 const requireAuth = require('../middleware/auth');
 const dashboardController = require('../controllers/dashboardController');
 
@@ -16,5 +17,8 @@ router.get('/user/stats', dashboardController.getUserStats);
 
 // Quick summary for dashboard widgets
 router.get('/user/summary', dashboardController.getQuickSummary);
+
+// Polling endpoint for user dashboard statistics
+router.get('/user/stats/poll', dashboardController.pollUserDashboardStats);
 
 module.exports = router;
