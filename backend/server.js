@@ -34,6 +34,7 @@ app.use('/api/v1/auth', require('./routes/auth'));
 app.use('/api/v1/surveys', require('./routes/surveys'));
 app.use('/api/v1/invitations', require('./routes/invitations'));
 app.use('/api/v1/dashboard', require('./routes/dashboard'));
+app.use('/api/v1/pdf', require('./routes/pdf'));
 
 //analytics route
 app.use('/api/v1/analytics', require('./routes/analytics'));
@@ -61,6 +62,8 @@ app.get('/api/v1', (req, res) => {
       surveys: '/api/v1/surveys/*',
       invitations: '/api/v1/invitations/*',
       dashboard: '/api/v1/dashboard/*',
+      pdf: '/api/v1/pdf/*',
+      analytics: '/api/v1/analytics/*',
       surveyAccess: '/survey/:surveyId?token=xxx'
     },
     health: '/api/v1/health'
