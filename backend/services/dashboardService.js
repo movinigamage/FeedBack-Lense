@@ -442,6 +442,8 @@ exports.calculateUserStats = async (userId) => {
   }
 };
 
+
+
 // ENHANCED: Get survey dashboard data with simple numerical analysis
 exports.getSurveyDashboard = async (surveyId, creatorId) => {
   try {
@@ -570,3 +572,136 @@ exports.getSurveyDashboard = async (surveyId, creatorId) => {
 };
 
 exports.calculateSurveyAnalysis = calculateSurveyAnalysis;
+
+const cache = {};
+const CACHE_TTL = 30 * 1000; // 30 seconds
+
+/**
+ * Optimized polling stats for dashboard with cross-survey aggregation and caching.
+ * Returns user stats + per-survey response/score aggregation.
+ */
+exports.getUserDashboardPollingStats = async (userId) => {
+  const cacheKey = `dashboard_polling_${userId}`;
+  const now = Date.now();
+
+  // Serve from cache if fresh
+  if (cache[cacheKey] && (now - cache[cacheKey].timestamp < CACHE_TTL)) {
+    return cache[cacheKey].data;
+  }
+
+  // 1. Get overall user stats (reuse your existing function)
+  const userStats = await exports.calculateUserStats(userId);
+
+  // 2. Cross-survey aggregation: For each survey created by user, get response count and average score
+  const mongoose = require('mongoose');
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
+  // Find all surveys created by this user
+  const surveys = await Survey.find({ creatorId: userObjectId }).select('_id title').lean();
+  const surveyIds = surveys.map(s => s._id);
+
+  let surveyAggregates = [];
+  if (surveyIds.length > 0) {
+    // Aggregate responses for each survey (response count, avg score if numerical)
+    surveyAggregates = await Response.aggregate([
+      { $match: { surveyId: { $in: surveyIds } } },
+      {
+        $group: {
+          _id: '$surveyId',
+          responseCount: { $sum: 1 },
+          avgScore: { $avg: '$responses.score' } // assumes 'score' field in responses array
+        }
+      }
+    ]);
+  }
+
+  // Map aggregates to survey info
+  const surveyStats = surveys.map(survey => {
+    const agg = surveyAggregates.find(a => String(a._id) === String(survey._id));
+    return {
+      surveyId: survey._id,
+      title: survey.title,
+      responseCount: agg ? agg.responseCount : 0,
+      avgScore: agg && agg.avgScore ? Math.round(agg.avgScore * 100) / 100 : null
+    };
+  });
+
+  const result = {
+    userStats,
+    surveyStats,
+    lastUpdated: new Date()
+  };
+
+  // Cache result
+  cache[cacheKey] = { data: result, timestamp: now };
+  return result;
+};
+
+/**
+ * Enhanced cross-survey aggregation for dashboard:
+ * - Per-survey stats (responses, avg completion time)
+ * - Overall completion rate
+ * - Response trends (last 14 days)
+ */
+exports.getCrossSurveyAggregation = async (userId) => {
+  const mongoose = require('mongoose');
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
+  // Find all surveys created by this user
+  const surveys = await Survey.find({ creatorId: userObjectId }).select('_id title createdAt').lean();
+  const surveyIds = surveys.map(s => s._id);
+
+  let surveyAggregates = [];
+  let overallCompletionRate = 0;
+  let responseTrends = [];
+
+  if (surveyIds.length > 0) {
+    // Per-survey stats
+    surveyAggregates = await Response.aggregate([
+      { $match: { surveyId: { $in: surveyIds } } },
+      {
+        $group: {
+          _id: '$surveyId',
+          responseCount: { $sum: 1 },
+          avgCompletionTime: { $avg: '$completionTime' }
+        }
+      }
+    ]);
+
+    // Overall completion rate
+    const totalInvitations = await Invitation.countDocuments({ surveyId: { $in: surveyIds } });
+    const totalCompleted = await Invitation.countDocuments({ surveyId: { $in: surveyIds }, status: 'completed' });
+    overallCompletionRate = totalInvitations > 0 ? Math.round((totalCompleted / totalInvitations) * 100) : 0;
+
+    // Response trends (last 14 days)
+    const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+    responseTrends = await Response.aggregate([
+      { $match: { surveyId: { $in: surveyIds }, submittedAt: { $gte: fourteenDaysAgo } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$submittedAt" } },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+  }
+
+  // Map aggregates to survey info
+  const surveyStats = surveys.map(survey => {
+    const agg = surveyAggregates.find(a => String(a._id) === String(survey._id));
+    return {
+      surveyId: survey._id,
+      title: survey.title,
+      responseCount: agg ? agg.responseCount : 0,
+      avgCompletionTime: agg && agg.avgCompletionTime ? Math.round(agg.avgCompletionTime) : null
+    };
+  });
+
+  return {
+    surveyStats,
+    overallCompletionRate,
+    responseTrends,
+    lastUpdated: new Date()
+  };
+};

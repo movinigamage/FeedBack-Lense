@@ -3,6 +3,7 @@ const Invitation = require('../models/Invitation');
 const Survey = require('../models/Survey');
 const User = require('../models/User');
 const Response = require('../models/Response');
+const activityService = require('./activityService'); // Add at the top if not present
 
 // Send invitations to multiple users
 exports.sendInvitations = async ({ surveyId, creatorId, userEmails }) => {
@@ -82,6 +83,14 @@ exports.sendInvitations = async ({ surveyId, creatorId, userEmails }) => {
           creatorId,
           userId: user._id,
           status: 'sent'
+        });
+
+        // Log activity for invitation sent
+        await activityService.logActivity({
+          userId: user._id,
+          surveyId,
+          type: 'invitation_sent',
+          message: `You were invited to survey "${survey.title}"`
         });
 
         return {
