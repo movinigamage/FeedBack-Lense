@@ -3,6 +3,9 @@
 
 const Response = require('../models/Response');
 const mongoose = require('mongoose');
+const activityService = require('./activityService'); // Add this at the top
+const Survey = require('../models/Survey'); // For survey title in activity
+const User = require('../models/User'); // Add this at the top if not already
 
 // Function to save a survey response
 async function saveSurveyResponse(data) {
@@ -69,6 +72,31 @@ async function saveSurveyResponse(data) {
     const response = new Response(data);
     await response.save();
     console.log('Response saved successfully with ID:', response._id);
+
+    // Log activity for response submitted
+    try {
+      // Fetch survey for title (optional, for better activity message)
+      let surveyTitle = '';
+      if (data.surveyId) {
+        const survey = await Survey.findById(data.surveyId).select('title');
+        surveyTitle = survey ? survey.title : '';
+      }
+      // Fetch respondent's username
+      let username = '';
+      if (data.respondentId) {
+        const user = await User.findById(data.respondentId).select('name');
+        username = user ? user.name : '';
+      }
+      await activityService.logActivity({
+        userId: data.respondentId,
+        surveyId: data.surveyId,
+        type: 'response_submitted',
+        message: `${username} submitted survey response${surveyTitle ? ` to "${surveyTitle}"` : ''}`
+      });
+    } catch (activityErr) {
+      console.error('Failed to log activity for response:', activityErr);
+    }
+
     return response;
   } catch (error) {
     console.error('Error saving survey response:', error);
