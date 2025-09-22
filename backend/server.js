@@ -34,6 +34,7 @@ app.use('/api/v1/auth', require('./routes/auth'));
 app.use('/api/v1/surveys', require('./routes/surveys'));
 app.use('/api/v1/invitations', require('./routes/invitations'));
 app.use('/api/v1/dashboard', require('./routes/dashboard'));
+app.use('/api/v1/activity', require('./routes/activity'));
 
 //analytics route
 app.use('/api/v1/analytics', require('./routes/analytics'));
