@@ -3,6 +3,16 @@ const API_BASE = 'http://localhost:4000/api/v1';
 // Import token helpers from lib
 import { getToken } from '../lib/lib.js';
 
+// Import analytics functions
+import {
+  getSurveyAnalysis,
+  getSurveyTimeSeries,
+  pollSurveyUpdates,
+  getMultipleSurveyAnalytics,
+  formatAnalyticsForDisplay,
+  formatTimeSeriesForChart
+} from './analytics-api.js';
+
 // Get authentication token
 export function getAuthToken() {
   return getToken();
@@ -33,6 +43,23 @@ export async function postJSONAuth(path, body) {
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',
     headers: { 
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+    body: JSON.stringify(body)
+  });
+
+  let data = null;
+  try { data = await res.json(); } catch (_) {}
+
+  return { res, data };
+}
+
+// PATCH JSON with authentication
+export async function patchJSONAuth(path, body) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'PATCH',
+    headers: {
       'Content-Type': 'application/json',
       ...getAuthHeaders()
     },
@@ -148,6 +175,17 @@ export async function getQuickSummary() {
     return { success: res.ok, data, status: res.status };
   } catch (error) {
     console.error('API Error in getQuickSummary:', error);
+    return { success: false, error: 'Network error occurred' };
+  }
+}
+
+// NEW: Fetch individual survey dashboard (includes response rate, avg completion time, question analysis)
+export async function getSurveyDashboard(surveyId) {
+  try {
+    const { res, data } = await getJSONAuth(`/dashboard/${surveyId}`);
+    return { success: res.ok, data: data?.data || null, status: res.status };
+  } catch (error) {
+    console.error('API Error in getSurveyDashboard:', error);
     return { success: false, error: 'Network error occurred' };
   }
 }
@@ -284,5 +322,25 @@ export async function submitSurveyResponse(responseData) {
   }
 }
 
+// Export analytics functions
+export {
+  getSurveyAnalysis,
+  getSurveyTimeSeries,
+  pollSurveyUpdates,
+  getMultipleSurveyAnalytics,
+  formatAnalyticsForDisplay,
+  formatTimeSeriesForChart
+};
+
 // 👇 expose to global scope
 window.sendInvitations = sendInvitations;
+
+// Expose analytics functions to global scope for easy access
+window.getSurveyAnalysis = getSurveyAnalysis;
+window.getSurveyTimeSeries = getSurveyTimeSeries;
+window.pollSurveyUpdates = pollSurveyUpdates;
+window.getMultipleSurveyAnalytics = getMultipleSurveyAnalytics;
+window.formatAnalyticsForDisplay = formatAnalyticsForDisplay;
+window.formatTimeSeriesForChart = formatTimeSeriesForChart;
+// Expose new dashboard helper
+window.getSurveyDashboard = getSurveyDashboard;
