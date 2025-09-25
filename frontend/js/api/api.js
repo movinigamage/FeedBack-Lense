@@ -322,6 +322,90 @@ export async function submitSurveyResponse(responseData) {
   }
 }
 
+// PDF Export API functions
+export async function getPDFInfo(surveyId) {
+  try {
+    const { res, data } = await getJSONAuth(`/pdf/survey/${surveyId}/info`);
+    return { success: res.ok, data, status: res.status };
+  } catch (error) {
+    console.error('API Error in getPDFInfo:', error);
+    return { success: false, error: 'Network error occurred' };
+  }
+}
+
+export async function previewPDFData(surveyId) {
+  try {
+    const { res, data } = await getJSONAuth(`/pdf/survey/${surveyId}/preview`);
+    return { success: res.ok, data, status: res.status };
+  } catch (error) {
+    console.error('API Error in previewPDFData:', error);
+    return { success: false, error: 'Network error occurred' };
+  }
+}
+
+export async function downloadPDF(surveyId, format = 'full') {
+  try {
+    const token = getAuthToken();
+    if (!token) {
+      console.error('❌ No authentication token found');
+      return { success: false, error: 'Authentication required' };
+    }
+
+    const url = `${API_BASE}/pdf/survey/${surveyId}/download?format=${format}`;
+    console.log('🌐 Downloading PDF from:', url);
+    console.log('🔑 Using token:', token.substring(0, 20) + '...');
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    console.log('📡 Response status:', response.status, response.statusText);
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch (e) {
+        // If response is not JSON, use status text
+        console.warn('Non-JSON error response:', response.statusText);
+      }
+      
+      return { 
+        success: false, 
+        error: errorMessage,
+        status: response.status 
+      };
+    }
+
+    // Get filename from Content-Disposition header or generate default
+    const contentDisposition = response.headers.get('Content-Disposition');
+    let filename = `survey-analytics-${surveyId}.pdf`;
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+      if (filenameMatch) {
+        filename = filenameMatch[1];
+      }
+    }
+
+    const blob = await response.blob();
+    return { 
+      success: true, 
+      blob, 
+      filename,
+      size: blob.size,
+      type: blob.type
+    };
+  } catch (error) {
+    console.error('API Error in downloadPDF:', error);
+    return { success: false, error: 'Network error occurred' };
+  }
+}
+
 // Export analytics functions
 export {
   getSurveyAnalysis,
@@ -344,3 +428,7 @@ window.formatAnalyticsForDisplay = formatAnalyticsForDisplay;
 window.formatTimeSeriesForChart = formatTimeSeriesForChart;
 // Expose new dashboard helper
 window.getSurveyDashboard = getSurveyDashboard;
+// Expose PDF export functions
+window.getPDFInfo = getPDFInfo;
+window.previewPDFData = previewPDFData;
+window.downloadPDF = downloadPDF;
