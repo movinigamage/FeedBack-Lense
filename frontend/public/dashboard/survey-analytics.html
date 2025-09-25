@@ -116,7 +116,9 @@
                             <button class="btn waves-effect waves-light refresh-btn" onclick="refreshSurveyAnalytics()">
                                 <i class="fas fa-sync-alt"></i> Refresh
                             </button>
-                            <button class="btn waves-effect waves-light share-btn" onclick="exportToPDF()">Export PDF</button>
+                            <button class="btn waves-effect waves-light share-btn" onclick="exportToPDF()">
+                                <i class="fas fa-download"></i> Export PDF
+                            </button>
                         </div>
                     </div>
                     
@@ -402,6 +404,7 @@
     <!-- Load our modules -->
     <script type="module" src="../../js/api/api.js"></script>
     <script type="module" src="../../js/analytics/analytics-utils.js"></script>
+    <script type="module" src="../../js/analytics/pdf-export.js"></script>
     <script type="module" src="../../js/analytics/survey-analytics.js"></script>
 </body>
 </html>

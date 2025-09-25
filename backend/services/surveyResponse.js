@@ -74,7 +74,6 @@ async function saveSurveyResponse(data) {
     await response.save();
     console.log('Response saved successfully with ID:', response._id);
 
-<<<<<<< HEAD
     // Update invitation status to 'completed' if invitationId is valid
     if (data.invitationId && mongoose.Types.ObjectId.isValid(data.invitationId)) {
       try {
@@ -136,7 +135,6 @@ async function saveSurveyResponse(data) {
       );
     }
     
-=======
     // Log activity for response submitted
     try {
       // Fetch survey for title (optional, for better activity message)
@@ -160,8 +158,6 @@ async function saveSurveyResponse(data) {
     } catch (activityErr) {
       console.error('Failed to log activity for response:', activityErr);
     }
-
->>>>>>> origin/master
     return response;
   } catch (error) {
     console.error('Error saving survey response:', error);

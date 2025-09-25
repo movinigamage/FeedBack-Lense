@@ -15,6 +15,10 @@ import {
     // newly added helper
     patchJSONAuth
 } from '../api/api.js';
+
+// Import API_BASE for testing
+const API_BASE = 'http://localhost:4000/api/v1';
+import { exportSurveyPDF, isPDFExportInProgress } from './pdf-export.js';
 import { clearToken } from '../lib/lib.js';
 
 import {
@@ -1450,11 +1454,38 @@ function refreshSurveyAnalytics() {
     loadSurveyAnalytics(surveyState.surveyId);
 }
 
-function exportToPDF() {
-    M.toast({
-        html: '<i class="fas fa-info-circle"></i> PDF export feature coming soon!',
-        classes: 'orange'
-    });
+async function exportToPDF() {
+    console.log('🔄 PDF Export initiated');
+    
+    // Get survey ID
+    const surveyId = surveyState.surveyId;
+    console.log('📋 Survey ID for export:', surveyId);
+    
+    if (!surveyId) {
+        console.error('❌ No survey ID available for export');
+        M.toast({
+            html: '<i class="fas fa-exclamation-triangle"></i> No survey selected for export',
+            classes: 'red',
+            displayLength: 4000
+        });
+        return;
+    }
+
+    try {
+        console.log('🚀 Starting PDF export process...');
+        
+        // Export PDF with full format - let the PDF export manager handle all state management
+        const result = await exportSurveyPDF(surveyId, 'full');
+        
+        if (result.success) {
+            console.log('✅ PDF export successful:', result.filename, 'Size:', result.size);
+        } else {
+            console.error('❌ PDF export failed:', result.error);
+        }
+    } catch (error) {
+        console.error('❌ PDF export error:', error);
+        // Error handling is already done by the PDF export manager
+    }
 }
 
 function viewAllResponses() {
@@ -1804,7 +1835,7 @@ async function loadRecentResponsesReal(surveyId, dashboardResultCache=null) {
     }
 }
 
-// --- Logout/dropdown (same UX as index/dashboard) ---
+// --- Logout/dropdown ---
 function initializeUserDropdownForAnalytics(){
     const userProfile = document.querySelector('.user-profile');
     if (!userProfile) return;
