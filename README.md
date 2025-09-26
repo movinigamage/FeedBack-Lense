@@ -10,20 +10,31 @@ To run tests, run the following command
   cd <repo-folder>
 ```
 
-### Build image
-docker build -t my-app .
+### Run MongoDB container 
 
-```bash
-  docker build -t my-app .
-```
+for the setup mongo DB with docker in locally , I used this command 
 
-### Run MongoDB container (if not local MongoDB)
 ```bash
   docker run -d --name mongodb-container -p 27017:27017 -v ~/mongodb/data:/data/db mongo
 ```
 
+### Build image
+
+ Now I build and start the app with Docker Compose
+using this commands, This commands will create and start both the app and a MongoDB service that setup at the previously
+ 
+```bash
+  docker-compose build
+  docker-compose up
+```
+
 
 ### Run app container
+
+#### Next we  can run using gui of docker dextop
+
+or  can run with terminal command
+
 ```bash
   docker run -d --name my-app-container -p 3000:3000 --env-file .env my-app
 ```
@@ -36,8 +47,8 @@ The output getting like this
 
 ```bash
 {
-"name": "Jane Doe",
-"studentId": "123456789"
+  "name": "Movini Wathsara",
+  "studentId": "225009463"
 }
 
 ```
