@@ -72,6 +72,15 @@ app.get('/api/v1', (req, res) => {
   });
 });
 
+// Student identity endpoint
+app.get("/api/student", (req, res) => {
+  res.json({
+    name: "Movini Wathsara",
+    studentId: "225009463", 
+  });
+});
+
+
 // 404 handler for API routes
 app.use('/api', (req, res) => {
   res.status(404).json({ error: 'API endpoint not found' });

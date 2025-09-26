@@ -1,3 +1,48 @@
+# Project Dockerise
+To run tests, run the following command
+
+### Clone the repo
+
+```bash
+  git clone <https://github.com/movinigamage/FeedBack-Lense.git>
+```
+```bash
+  cd <repo-folder>
+```
+
+### Build image
+docker build -t my-app .
+
+```bash
+  docker build -t my-app .
+```
+
+### Run MongoDB container (if not local MongoDB)
+```bash
+  docker run -d --name mongodb-container -p 27017:27017 -v ~/mongodb/data:/data/db mongo
+```
+
+
+### Run app container
+```bash
+  docker run -d --name my-app-container -p 3000:3000 --env-file .env my-app
+```
+
+### Verify student API
+
+http://localhost:4000/api/student
+
+The output getting like this
+
+```bash
+{
+"name": "Jane Doe",
+"studentId": "123456789"
+}
+
+```
+
+
 # FeedBack-Lense
 
 A comprehensive survey creation and feedback management platform built with Node.js, Express, and MongoDB. FeedBack-Lense provides a complete solution for creating surveys via CSV upload, managing participant invitations, collecting responses, and analyzing feedback data.
